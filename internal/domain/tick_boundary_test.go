@@ -36,3 +36,34 @@ func TestPriceTickValidatorBoundaries(t *testing.T) {
 		})
 	}
 }
+
+func TestPositionValidatorBoundaries(t *testing.T) {
+	validPosition := Position{
+		PortfolioID:  "portfolio-1",
+		Symbol:       "GOLD",
+		Quantity:     10,
+		AveragePrice: 100,
+	}
+
+	tests := []struct {
+		name     string
+		position Position
+		valid    bool
+	}{
+		{name: "valid long position passes", position: validPosition, valid: true},
+		{name: "valid short position passes", position: func() Position { position := validPosition; position.Quantity = -10; return position }(), valid: true},
+		{name: "zero quantity fails", position: func() Position { position := validPosition; position.Quantity = 0; return position }(), valid: false},
+		{name: "missing portfolio fails", position: func() Position { position := validPosition; position.PortfolioID = ""; return position }(), valid: false},
+		{name: "missing symbol fails", position: func() Position { position := validPosition; position.Symbol = ""; return position }(), valid: false},
+		{name: "zero average price fails", position: func() Position { position := validPosition; position.AveragePrice = 0; return position }(), valid: false},
+		{name: "negative average price fails", position: func() Position { position := validPosition; position.AveragePrice = -1; return position }(), valid: false},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			if got := test.position.validator(); got != test.valid {
+				t.Fatalf("validator() = %v, want %v", got, test.valid)
+			}
+		})
+	}
+}
