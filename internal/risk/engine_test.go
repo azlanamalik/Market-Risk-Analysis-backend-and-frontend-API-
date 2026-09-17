@@ -23,27 +23,27 @@ func TestRiskBoundaries(t *testing.T) {
 	}
 
 	tests := []struct {
-		name                                      string
-		tick                                      domain.PriceTick
-		position                                  domain.Position
-		wantMarketPrice, wantMarketValue, wantPnL float64
+		name     string
+		tick     domain.PriceTick
+		position domain.Position
+		want     domain.PositionRisk
 	}{
-		{name: "equal bid and ask", tick: func() domain.PriceTick { tick := validTick; tick.Bid = 100; tick.Ask = 100; return tick }(), position: validPosition, wantMarketPrice: 100, wantMarketValue: 1000, wantPnL: 0},
-		{name: "spread uses midpoint", tick: validTick, position: validPosition, wantMarketPrice: 100, wantMarketValue: 1000, wantPnL: 0},
-		{name: "long profit", tick: domain.PriceTick{EventID: "event-1", Symbol: "GOLD", Bid: 109, Ask: 111, ObservedAt: time.Unix(1, 0)}, position: validPosition, wantMarketPrice: 110, wantMarketValue: 1100, wantPnL: 100},
-		{name: "long loss", tick: domain.PriceTick{EventID: "event-1", Symbol: "GOLD", Bid: 89, Ask: 91, ObservedAt: time.Unix(1, 0)}, position: validPosition, wantMarketPrice: 90, wantMarketValue: 900, wantPnL: -100},
-		{name: "short profit", tick: domain.PriceTick{EventID: "event-1", Symbol: "GOLD", Bid: 89, Ask: 91, ObservedAt: time.Unix(1, 0)}, position: func() domain.Position { position := validPosition; position.Quantity = -10; return position }(), wantMarketPrice: 90, wantMarketValue: -900, wantPnL: 100},
-		{name: "short loss", tick: domain.PriceTick{EventID: "event-1", Symbol: "GOLD", Bid: 109, Ask: 111, ObservedAt: time.Unix(1, 0)}, position: func() domain.Position { position := validPosition; position.Quantity = -10; return position }(), wantMarketPrice: 110, wantMarketValue: -1100, wantPnL: -100},
-		{name: "flat price", tick: validTick, position: validPosition, wantMarketPrice: 100, wantMarketValue: 1000, wantPnL: 0},
-		{name: "invalid tick", tick: func() domain.PriceTick { tick := validTick; tick.Bid = 0; return tick }(), position: validPosition, wantMarketPrice: 0, wantMarketValue: 0, wantPnL: 0},
-		{name: "symbol mismatch", tick: func() domain.PriceTick { tick := validTick; tick.Symbol = "SILVER"; return tick }(), position: validPosition, wantMarketPrice: 0, wantMarketValue: 0, wantPnL: 0},
+		{name: "equal bid and ask", tick: func() domain.PriceTick { tick := validTick; tick.Bid = 100; tick.Ask = 100; return tick }(), position: validPosition, want: domain.PositionRisk{PortfolioID: "portfolio-1", Symbol: "GOLD", MarketPrice: 100, MarketValue: 1000, UnrealizedPnL: 0}},
+		{name: "spread uses midpoint", tick: validTick, position: validPosition, want: domain.PositionRisk{PortfolioID: "portfolio-1", Symbol: "GOLD", MarketPrice: 100, MarketValue: 1000, UnrealizedPnL: 0}},
+		{name: "long profit", tick: domain.PriceTick{EventID: "event-1", Symbol: "GOLD", Bid: 109, Ask: 111, ObservedAt: time.Unix(1, 0)}, position: validPosition, want: domain.PositionRisk{PortfolioID: "portfolio-1", Symbol: "GOLD", MarketPrice: 110, MarketValue: 1100, UnrealizedPnL: 100}},
+		{name: "long loss", tick: domain.PriceTick{EventID: "event-1", Symbol: "GOLD", Bid: 89, Ask: 91, ObservedAt: time.Unix(1, 0)}, position: validPosition, want: domain.PositionRisk{PortfolioID: "portfolio-1", Symbol: "GOLD", MarketPrice: 90, MarketValue: 900, UnrealizedPnL: -100}},
+		{name: "short profit", tick: domain.PriceTick{EventID: "event-1", Symbol: "GOLD", Bid: 89, Ask: 91, ObservedAt: time.Unix(1, 0)}, position: func() domain.Position { position := validPosition; position.Quantity = -10; return position }(), want: domain.PositionRisk{PortfolioID: "portfolio-1", Symbol: "GOLD", MarketPrice: 90, MarketValue: -900, UnrealizedPnL: 100}},
+		{name: "short loss", tick: domain.PriceTick{EventID: "event-1", Symbol: "GOLD", Bid: 109, Ask: 111, ObservedAt: time.Unix(1, 0)}, position: func() domain.Position { position := validPosition; position.Quantity = -10; return position }(), want: domain.PositionRisk{PortfolioID: "portfolio-1", Symbol: "GOLD", MarketPrice: 110, MarketValue: -1100, UnrealizedPnL: -100}},
+		{name: "flat price", tick: validTick, position: validPosition, want: domain.PositionRisk{PortfolioID: "portfolio-1", Symbol: "GOLD", MarketPrice: 100, MarketValue: 1000, UnrealizedPnL: 0}},
+		{name: "invalid tick", tick: func() domain.PriceTick { tick := validTick; tick.Bid = 0; return tick }(), position: validPosition, want: domain.PositionRisk{PortfolioID: "error loading", Symbol: "error loading", MarketPrice: 1, MarketValue: 1, UnrealizedPnL: 1}},
+		{name: "symbol mismatch", tick: func() domain.PriceTick { tick := validTick; tick.Symbol = "SILVER"; return tick }(), position: validPosition, want: domain.PositionRisk{PortfolioID: "error loading", Symbol: "error loading", MarketPrice: 1, MarketValue: 1, UnrealizedPnL: 1}},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			marketPrice, marketValue, pnl := risk(test.tick, test.position)
-			if marketPrice != test.wantMarketPrice || marketValue != test.wantMarketValue || pnl != test.wantPnL {
-				t.Fatalf("risk() = (%v, %v, %v), want (%v, %v, %v)", marketPrice, marketValue, pnl, test.wantMarketPrice, test.wantMarketValue, test.wantPnL)
+			got := risk(test.tick, test.position)
+			if got != test.want {
+				t.Fatalf("risk() = %+v, want %+v", got, test.want)
 			}
 		})
 	}
