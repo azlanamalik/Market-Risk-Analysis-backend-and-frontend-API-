@@ -30,7 +30,7 @@ func TestPriceTickValidatorBoundaries(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			if got := test.tick.validator(); got != test.valid {
+			if got := test.tick.Validator(); got != test.valid {
 				t.Fatalf("validator() = %v, want %v", got, test.valid)
 			}
 		})
@@ -61,7 +61,7 @@ func TestPositionValidatorBoundaries(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			if got := test.position.validator(); got != test.valid {
+			if got := test.position.Validator(); got != test.valid {
 				t.Fatalf("validator() = %v, want %v", got, test.valid)
 			}
 		})

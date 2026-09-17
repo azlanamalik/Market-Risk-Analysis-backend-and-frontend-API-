@@ -16,7 +16,7 @@ type PriceTick struct {
 func (PriceTick PriceTick) Midpoint() float64 {
 	return (PriceTick.Bid + PriceTick.Ask) / 2
 }
-func (PriceTick PriceTick) validator() bool {
+func (PriceTick PriceTick) Validator() bool {
 	logger := slog.Default()
 	if PriceTick.EventID == "" {
 		logger.Error("invalid price EventID", "event_id", PriceTick.EventID)
@@ -57,7 +57,7 @@ type Position struct {
 •	Negative quantity means short exposure.
 •	Zero means no open exposure and should normally not be stored as an active position.
 */
-func (Position Position) validator() bool {
+func (Position Position) Validator() bool {
 	logger := slog.Default()
 	if Position.PortfolioID == "" {
 		logger.Error("invalid position portfolio ID", "portfolio_id", Position.PortfolioID)
