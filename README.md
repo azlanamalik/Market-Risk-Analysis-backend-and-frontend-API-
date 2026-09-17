@@ -2,7 +2,7 @@ This project is a simulated live market analysis RISK TOOL
 
 
 
-![overview](github.com/azlanamalik/Market-Risk-Analysis-backend-and-frontend-API-\snapshot_of_earlydev.png "Logo Title Text 1")
+![overview](https://github.com/azlanamalik/Market-Risk-Analysis-backend-and-frontend-API-/blob/main/snapshot_of_earlydev.png "Logo Title Text 1")
 
 
 The aim of this project is to gain proficiency: GoLang SQL (learnt in uni but didnt use in a actual project, learnt basic commands and queries to DB rather than implimenting) Backend interactions (how it interacts with the front end) Possible API approaches (possibly might have to impliment websockets to allow constant communications between back and front in realtime)
