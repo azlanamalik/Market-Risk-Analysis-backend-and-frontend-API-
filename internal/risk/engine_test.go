@@ -28,7 +28,7 @@ func TestRiskBoundaries(t *testing.T) {
 		position                                  domain.Position
 		wantMarketPrice, wantMarketValue, wantPnL float64
 	}{
-		{name: "equal bid and ask", tick: domain.PriceTick{Bid: 100, Ask: 100}, position: validPosition, wantMarketPrice: 100, wantMarketValue: 1000, wantPnL: 0},
+		{name: "equal bid and ask", tick: func() domain.PriceTick { tick := validTick; tick.Bid = 100; tick.Ask = 100; return tick }(), position: validPosition, wantMarketPrice: 100, wantMarketValue: 1000, wantPnL: 0},
 		{name: "spread uses midpoint", tick: validTick, position: validPosition, wantMarketPrice: 100, wantMarketValue: 1000, wantPnL: 0},
 		{name: "long profit", tick: domain.PriceTick{EventID: "event-1", Symbol: "GOLD", Bid: 109, Ask: 111, ObservedAt: time.Unix(1, 0)}, position: validPosition, wantMarketPrice: 110, wantMarketValue: 1100, wantPnL: 100},
 		{name: "long loss", tick: domain.PriceTick{EventID: "event-1", Symbol: "GOLD", Bid: 89, Ask: 91, ObservedAt: time.Unix(1, 0)}, position: validPosition, wantMarketPrice: 90, wantMarketValue: 900, wantPnL: -100},
