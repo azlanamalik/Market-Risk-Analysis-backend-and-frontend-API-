@@ -2,15 +2,16 @@
 package store
 
 import (
+	"context"
 	"errors"
 
 	"github.com/azlanamalik/Market-Risk-Analysis-backend-and-frontend-API-/internal/domain"
 )
 
 type MemoryStore struct {
-	positions    map[string]map[string]domain.Position
-	latestPrices map[string]domain.PriceTick
-	risks        map[string]map[string]domain.PositionRisk
+	positions    map[string]map[string]domain.Position     //[portID] [ symbol] position . prints the position with that stock
+	latestPrices map[string]domain.PriceTick               //[ symbol] domain.PriceTick . prints the lastest price info
+	risks        map[string]map[string]domain.PositionRisk //[portID] [symbol] position . prints the LATEST RISK FOR OPRTOLIO AND THE SYMB
 }
 
 func (store *MemoryStore) InsertPosition(position domain.Position) error {
@@ -51,6 +52,21 @@ func (store *MemoryStore) GetPosition(portfolioID, symbol string) (domain.Positi
 	}
 
 	return position, nil
+}
+
+func (store *MemoryStore) GetPositionsBySymbol(ctx context.Context, symbol string) ([]domain.Position, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+
+	positions := make([]domain.Position, 0)
+	for _, portfolioPositions := range store.positions {
+		if position, exists := portfolioPositions[symbol]; exists {
+			positions = append(positions, position)
+		}
+	}
+
+	return positions, nil
 }
 
 func (store *MemoryStore) InsertPriceTick(priceTick domain.PriceTick) error {
