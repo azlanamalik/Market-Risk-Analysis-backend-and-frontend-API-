@@ -5,19 +5,23 @@ import (
 	"context"
 	"errors"
 	"sync"
+
 	"github.com/azlanamalik/Market-Risk-Analysis-backend-and-frontend-API-/internal/domain"
 )
 
-
 type MemoryStore struct {
-	mu sync.RWMutex//allows for a safe way to access memory on several go routines
+	mu           sync.RWMutex                              //allows for a safe way to access memory on several go routines
 	positions    map[string]map[string]domain.Position     //[portID] [ symbol] position . prints the position with that stock
 	latestPrices map[string]domain.PriceTick               //[ symbol] domain.PriceTick . prints the lastest price info
 	risks        map[string]map[string]domain.PositionRisk //[portID] [symbol] position . prints the LATEST RISK FOR OPRTOLIO AND THE SYMB
 }
-///we have created this safe for single threads but now we should look to add concurrency 
-func (store *MemoryStore) InsertPosition(position domain.Position) error {
-	store.mu.Lock()//just a reminder DO NOT EDIT AND CALL EXTERNAL CODE OR PROGRAMS THIS WILL DEADLOCK THE MUTEX (VERY SCARY)
+
+// /we have created this safe for single threads but now we should look to add concurrency
+func (store *MemoryStore) InsertPosition(ctx context.Context, position domain.Position) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	store.mu.Lock() //just a reminder DO NOT EDIT AND CALL EXTERNAL CODE OR PROGRAMS THIS WILL DEADLOCK THE MUTEX (VERY SCARY)
 	defer store.mu.Unlock()
 	if store.positions == nil {
 		store.positions = make(map[string]map[string]domain.Position)
@@ -33,7 +37,10 @@ func (store *MemoryStore) InsertPosition(position domain.Position) error {
 	return nil
 }
 
-func (store *MemoryStore) UpdatePosition(position domain.Position) error {
+func (store *MemoryStore) UpdatePosition(ctx context.Context, position domain.Position) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
 	store.mu.Lock()
 	defer store.mu.Unlock()
 	if store.positions == nil || store.positions[position.PortfolioID] == nil {
@@ -47,7 +54,10 @@ func (store *MemoryStore) UpdatePosition(position domain.Position) error {
 	return nil
 }
 
-func (store *MemoryStore) GetPosition(portfolioID, symbol string) (domain.Position, error) {
+func (store *MemoryStore) GetPosition(ctx context.Context, portfolioID, symbol string) (domain.Position, error) {
+	if err := ctx.Err(); err != nil {
+		return domain.Position{}, err
+	}
 	store.mu.RLock()
 	defer store.mu.RUnlock()
 	if store.positions == nil || store.positions[portfolioID] == nil {
@@ -63,6 +73,9 @@ func (store *MemoryStore) GetPosition(portfolioID, symbol string) (domain.Positi
 }
 
 func (store *MemoryStore) GetPositionsBySymbol(ctx context.Context, symbol string) ([]domain.Position, error) {
+	if err := ctx.Err(); err != nil {
+		return []domain.Position{}, err
+	}
 	store.mu.RLock()
 	defer store.mu.RUnlock()
 	if err := ctx.Err(); err != nil {
@@ -79,7 +92,10 @@ func (store *MemoryStore) GetPositionsBySymbol(ctx context.Context, symbol strin
 	return positions, nil
 }
 
-func (store *MemoryStore) InsertPriceTick(priceTick domain.PriceTick) error {
+func (store *MemoryStore) InsertPriceTick(ctx context.Context, priceTick domain.PriceTick) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
 	store.mu.Lock()
 	defer store.mu.Unlock()
 	if store.latestPrices == nil {
@@ -93,7 +109,10 @@ func (store *MemoryStore) InsertPriceTick(priceTick domain.PriceTick) error {
 	return nil
 }
 
-func (store *MemoryStore) UpdatePriceTick(priceTick domain.PriceTick) error {
+func (store *MemoryStore) UpdatePriceTick(ctx context.Context, priceTick domain.PriceTick) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
 	store.mu.Lock()
 	defer store.mu.Unlock()
 	if store.latestPrices == nil {
@@ -107,7 +126,10 @@ func (store *MemoryStore) UpdatePriceTick(priceTick domain.PriceTick) error {
 	return nil
 }
 
-func (store *MemoryStore) GetPriceTick(symbol string) (domain.PriceTick, error) {
+func (store *MemoryStore) GetPriceTick(ctx context.Context, symbol string) (domain.PriceTick, error) {
+	if err := ctx.Err(); err != nil {
+		return domain.PriceTick, err
+	}
 	store.mu.RLock()
 	defer store.mu.RUnlock()
 	if store.latestPrices == nil {
@@ -122,7 +144,7 @@ func (store *MemoryStore) GetPriceTick(symbol string) (domain.PriceTick, error) 
 	return priceTick, nil
 }
 
-func (store *MemoryStore) InsertRisk(risk domain.PositionRisk) error {
+func (store *MemoryStore) InsertRisk(ctx context.Context, risk domain.PositionRisk) error {
 	store.mu.Lock()
 	defer store.mu.Unlock()
 	if store.risks == nil {
@@ -139,7 +161,7 @@ func (store *MemoryStore) InsertRisk(risk domain.PositionRisk) error {
 	return nil
 }
 
-func (store *MemoryStore) UpdateRisk(risk domain.PositionRisk) error {
+func (store *MemoryStore) UpdateRisk(ctx context.Context, risk domain.PositionRisk) error {
 	store.mu.Lock()
 	defer store.mu.Unlock()
 	if store.risks == nil || store.risks[risk.PortfolioID] == nil {
@@ -153,7 +175,7 @@ func (store *MemoryStore) UpdateRisk(risk domain.PositionRisk) error {
 	return nil
 }
 
-func (store *MemoryStore) GetRisk(portfolioID, symbol string) (domain.PositionRisk, error) {
+func (store *MemoryStore) GetRisk(ctx context.Context, portfolioID, symbol string) (domain.PositionRisk, error) {
 	store.mu.RLock()
 	defer store.mu.RUnlock()
 	if store.risks == nil || store.risks[portfolioID] == nil {

@@ -23,7 +23,7 @@ func TestInsertAndGetPositionBySymbol(t *testing.T) {
 	store := &MemoryStore{} //allows to create and query the functions it means make memstore then get the location
 	position := testPosition("portfolio-1", "DEMO", 10)
 
-	if err := store.InsertPosition(position); err != nil {
+	if err := store.InsertPosition(context.Background(), position); err != nil {
 		t.Fatalf("insert position: %v", err)
 	}
 
@@ -43,12 +43,12 @@ func TestUpdatePositionDoesNotCreateDuplicate(t *testing.T) {
 	store := &MemoryStore{}
 	position := testPosition("portfolio-1", "DEMO", 10)
 
-	if err := store.InsertPosition(position); err != nil {
+	if err := store.InsertPosition(context.Background(), position); err != nil {
 		t.Fatalf("insert position: %v", err)
 	}
 
 	updated := testPosition("portfolio-1", "DEMO", 25)
-	if err := store.UpdatePosition(updated); err != nil {
+	if err := store.UpdatePosition(context.Background(), updated); err != nil {
 		t.Fatalf("update position: %v", err)
 	}
 
@@ -71,7 +71,7 @@ func TestSameSymbolCanExistInDifferentPortfolios(t *testing.T) {
 		testPosition("portfolio-1", "DEMO", 10),
 		testPosition("portfolio-2", "DEMO", 20),
 	} {
-		if err := store.InsertPosition(position); err != nil {
+		if err := store.InsertPosition(context.Background(), position); err != nil {
 			t.Fatalf("insert position: %v", err)
 		}
 	}
@@ -101,7 +101,7 @@ func TestChangingReturnedSliceDoesNotChangeStore(t *testing.T) {
 	store := &MemoryStore{}
 	position := testPosition("portfolio-1", "DEMO", 10)
 
-	if err := store.InsertPosition(position); err != nil {
+	if err := store.InsertPosition(context.Background(), position); err != nil {
 		t.Fatalf("insert position: %v", err)
 	}
 
@@ -111,7 +111,7 @@ func TestChangingReturnedSliceDoesNotChangeStore(t *testing.T) {
 	}
 	positions[0] = testPosition("changed", "CHANGED", 999)
 
-	stored, err := store.GetPosition("portfolio-1", "DEMO")
+	stored, err := store.GetPosition(context.Background(), "portfolio-1", "DEMO")
 	if err != nil {
 		t.Fatalf("get stored position: %v", err)
 	}
@@ -133,7 +133,7 @@ func TestCancelledContextReturnsCancellation(t *testing.T) {
 func TestConcurrentReadsFromMemory(t *testing.T) {
 	store := &MemoryStore{}
 	position := testPosition("portfolio-1", "DEMO", 10)
-	if err := store.InsertPosition(position); err != nil {
+	if err := store.InsertPosition(context.Background(), position); err != nil {
 		t.Fatalf("insert position: %v", err)
 	}
 
@@ -143,7 +143,7 @@ func TestConcurrentReadsFromMemory(t *testing.T) {
 		waitGroup.Add(1)
 		go func() {
 			defer waitGroup.Done()
-			_, err := store.GetPosition("portfolio-1", "DEMO")
+			_, err := store.GetPosition(context.Background(), "portfolio-1", "DEMO")
 			stream <- err
 		}()
 	}
@@ -163,7 +163,7 @@ func TestConcurrentReadersAndWriters(t *testing.T) {
 	// Create records first so every writer can update an existing position.
 	for i := 0; i < positionCount; i++ {
 		position := testPosition(fmt.Sprintf("portfolio-%d", i), "DEMO", 10)
-		if err := store.InsertPosition(position); err != nil {
+		if err := store.InsertPosition(context.Background(), position); err != nil {
 			t.Fatalf("insert position: %v", err)
 		}
 	}
@@ -178,7 +178,7 @@ func TestConcurrentReadersAndWriters(t *testing.T) {
 			defer waitGroup.Done() //so issue here is that main func will end before the func return we need to
 			//defer until it is finished
 			position := testPosition(fmt.Sprintf("portfolio-%d", index), "DEMO", 20)
-			if err := store.UpdatePosition(position); err != nil {
+			if err := store.UpdatePosition(context.Background(), position); err != nil {
 				errorsFromGoroutines <- err
 			}
 		}(i)
