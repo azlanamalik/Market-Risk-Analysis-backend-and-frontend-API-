@@ -4,17 +4,21 @@ package store
 import (
 	"context"
 	"errors"
-
+	"sync"
 	"github.com/azlanamalik/Market-Risk-Analysis-backend-and-frontend-API-/internal/domain"
 )
 
+
 type MemoryStore struct {
+	mu sync.RWMutex//allows for a safe way to access memory on several go routines
 	positions    map[string]map[string]domain.Position     //[portID] [ symbol] position . prints the position with that stock
 	latestPrices map[string]domain.PriceTick               //[ symbol] domain.PriceTick . prints the lastest price info
 	risks        map[string]map[string]domain.PositionRisk //[portID] [symbol] position . prints the LATEST RISK FOR OPRTOLIO AND THE SYMB
 }
-
+///we have created this safe for single threads but now we should look to add concurrency 
 func (store *MemoryStore) InsertPosition(position domain.Position) error {
+	store.mu.Lock()
+	defer store.mu.Unlock()
 	if store.positions == nil {
 		store.positions = make(map[string]map[string]domain.Position)
 	}
@@ -30,6 +34,8 @@ func (store *MemoryStore) InsertPosition(position domain.Position) error {
 }
 
 func (store *MemoryStore) UpdatePosition(position domain.Position) error {
+	store.mu.Lock()
+	defer store.mu.Unlock()
 	if store.positions == nil || store.positions[position.PortfolioID] == nil {
 		return errors.New("position does not exist")
 	}
@@ -42,6 +48,8 @@ func (store *MemoryStore) UpdatePosition(position domain.Position) error {
 }
 
 func (store *MemoryStore) GetPosition(portfolioID, symbol string) (domain.Position, error) {
+	store.mu.RLock()
+	defer store.mu.RUnlock()
 	if store.positions == nil || store.positions[portfolioID] == nil {
 		return domain.Position{}, errors.New("position does not exist")
 	}
@@ -55,6 +63,8 @@ func (store *MemoryStore) GetPosition(portfolioID, symbol string) (domain.Positi
 }
 
 func (store *MemoryStore) GetPositionsBySymbol(ctx context.Context, symbol string) ([]domain.Position, error) {
+	store.mu.RLock()
+	defer store.mu.RUnlock()
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
@@ -70,6 +80,8 @@ func (store *MemoryStore) GetPositionsBySymbol(ctx context.Context, symbol strin
 }
 
 func (store *MemoryStore) InsertPriceTick(priceTick domain.PriceTick) error {
+	store.mu.Lock()
+	defer store.mu.Unlock()
 	if store.latestPrices == nil {
 		store.latestPrices = make(map[string]domain.PriceTick)
 	}
@@ -82,6 +94,8 @@ func (store *MemoryStore) InsertPriceTick(priceTick domain.PriceTick) error {
 }
 
 func (store *MemoryStore) UpdatePriceTick(priceTick domain.PriceTick) error {
+	store.mu.Lock()
+	defer store.mu.Unlock()
 	if store.latestPrices == nil {
 		return errors.New("price tick does not exist")
 	}
@@ -94,6 +108,8 @@ func (store *MemoryStore) UpdatePriceTick(priceTick domain.PriceTick) error {
 }
 
 func (store *MemoryStore) GetPriceTick(symbol string) (domain.PriceTick, error) {
+	store.mu.RLock()
+	defer store.mu.RUnlock()
 	if store.latestPrices == nil {
 		return domain.PriceTick{}, errors.New("price tick does not exist")
 	}
@@ -107,6 +123,8 @@ func (store *MemoryStore) GetPriceTick(symbol string) (domain.PriceTick, error) 
 }
 
 func (store *MemoryStore) InsertRisk(risk domain.PositionRisk) error {
+	store.mu.Lock()
+	defer store.mu.Unlock()
 	if store.risks == nil {
 		store.risks = make(map[string]map[string]domain.PositionRisk)
 	}
@@ -122,6 +140,8 @@ func (store *MemoryStore) InsertRisk(risk domain.PositionRisk) error {
 }
 
 func (store *MemoryStore) UpdateRisk(risk domain.PositionRisk) error {
+	store.mu.Lock()
+	defer store.mu.Unlock()
 	if store.risks == nil || store.risks[risk.PortfolioID] == nil {
 		return errors.New("risk does not exist")
 	}
@@ -134,6 +154,8 @@ func (store *MemoryStore) UpdateRisk(risk domain.PositionRisk) error {
 }
 
 func (store *MemoryStore) GetRisk(portfolioID, symbol string) (domain.PositionRisk, error) {
+	store.mu.RLock()
+	defer store.mu.RUnlock()
 	if store.risks == nil || store.risks[portfolioID] == nil {
 		return domain.PositionRisk{}, errors.New("risk does not exist")
 	}

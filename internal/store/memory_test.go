@@ -18,7 +18,7 @@ func testPosition(portfolioID, symbol string, quantity float64) domain.Position 
 }
 
 func TestInsertAndGetPositionBySymbol(t *testing.T) {
-	store := &MemoryStore{}
+	store := &MemoryStore{}//allows to create and query the functions it means make memstore then get the location
 	position := testPosition("portfolio-1", "DEMO", 10)
 
 	if err := store.InsertPosition(position); err != nil {
