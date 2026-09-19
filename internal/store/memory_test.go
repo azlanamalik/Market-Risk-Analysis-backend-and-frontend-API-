@@ -3,6 +3,8 @@ package store
 import (
 	"context"
 	"errors"
+	"fmt"
+	"sync"
 	"testing"
 
 	"github.com/azlanamalik/Market-Risk-Analysis-backend-and-frontend-API-/internal/domain"
@@ -18,7 +20,7 @@ func testPosition(portfolioID, symbol string, quantity float64) domain.Position 
 }
 
 func TestInsertAndGetPositionBySymbol(t *testing.T) {
-	store := &MemoryStore{}//allows to create and query the functions it means make memstore then get the location
+	store := &MemoryStore{} //allows to create and query the functions it means make memstore then get the location
 	position := testPosition("portfolio-1", "DEMO", 10)
 
 	if err := store.InsertPosition(position); err != nil {
@@ -128,3 +130,77 @@ func TestCancelledContextReturnsCancellation(t *testing.T) {
 		t.Fatalf("expected context.Canceled, got %v", err)
 	}
 }
+func TestConcurrentReadsFromMemory(t *testing.T) {
+	store := &MemoryStore{}
+	position := testPosition("portfolio-1", "DEMO", 10)
+	if err := store.InsertPosition(position); err != nil {
+		t.Fatalf("insert position: %v", err)
+	}
+
+	var waitGroup sync.WaitGroup
+	stream := make(chan error, 4)
+	for range 4 {
+		waitGroup.Add(1)
+		go func() {
+			defer waitGroup.Done()
+			_, err := store.GetPosition("portfolio-1", "DEMO")
+			stream <- err
+		}()
+	}
+
+	waitGroup.Wait()
+	for range 4 {
+		if err := <-stream; err != nil {
+			t.Errorf("concurrent read failed: %v", err)
+		}
+	}
+}
+
+func TestConcurrentReadersAndWriters(t *testing.T) {
+	store := &MemoryStore{}
+	const positionCount = 100
+
+	// Create records first so every writer can update an existing position.
+	for i := 0; i < positionCount; i++ {
+		position := testPosition(fmt.Sprintf("portfolio-%d", i), "DEMO", 10)
+		if err := store.InsertPosition(position); err != nil {
+			t.Fatalf("insert position: %v", err)
+		}
+	}
+
+	var waitGroup sync.WaitGroup
+	errorsFromGoroutines := make(chan error, positionCount*2)
+
+	// Start writers. Each writer updates a different position.
+	for i := 0; i < positionCount; i++ {
+		waitGroup.Add(1)
+		go func(index int) {
+			defer waitGroup.Done() //so issue here is that main func will end before the func return we need to
+			//defer until it is finished
+			position := testPosition(fmt.Sprintf("portfolio-%d", index), "DEMO", 20)
+			if err := store.UpdatePosition(position); err != nil {
+				errorsFromGoroutines <- err
+			}
+		}(i)
+	}
+
+	// Start readers while the writers are updating the store.
+	for i := 0; i < positionCount; i++ {
+		waitGroup.Add(1) //always do this
+		go func() {
+			defer waitGroup.Done() //always do this as main func will end before you can write run it
+			if _, err := store.GetPositionsBySymbol(context.Background(), "DEMO"); err != nil {
+				errorsFromGoroutines <- err
+			}
+		}()
+	}
+
+	waitGroup.Wait()
+	close(errorsFromGoroutines)
+
+	for err := range errorsFromGoroutines {
+		t.Errorf("concurrent operation failed: %v", err)
+	}
+}
+
+//get github copilot to write the rest of the test cases as they are the same just different variables (just to save time)

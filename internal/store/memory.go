@@ -17,7 +17,7 @@ type MemoryStore struct {
 }
 ///we have created this safe for single threads but now we should look to add concurrency 
 func (store *MemoryStore) InsertPosition(position domain.Position) error {
-	store.mu.Lock()
+	store.mu.Lock()//just a reminder DO NOT EDIT AND CALL EXTERNAL CODE OR PROGRAMS THIS WILL DEADLOCK THE MUTEX (VERY SCARY)
 	defer store.mu.Unlock()
 	if store.positions == nil {
 		store.positions = make(map[string]map[string]domain.Position)
