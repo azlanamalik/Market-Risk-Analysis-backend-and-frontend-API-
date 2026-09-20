@@ -22,7 +22,7 @@ type Simulator struct {
 func NewSimulator(
 	initialPrice map[string]float64,
 	interval      time.Duration,
-	spread 		map[string]float64) (*Simulator, error){
+	spread 		map[string]float64) (*Simulator, error) {
 	//add error checks later this isnt vital right now as we are SIMULATING data
 	return &Simulator{initialPrices: initialPrice , interval: interval, spread: spread} , nil
 }
@@ -97,6 +97,7 @@ func (simulator *Simulator) streamSymbol(
 		case <-ctx.Done()://program stopped context
 			return
 		case timestamp := <-ticker.C://write the timestamp 
+			location, _ := time.LoadLocation("Europe/London")
 			price *= 1 + ((random.Float64() - 0.5) / 1000)
 			spread := price * 0.0001
 			tick := domain.PriceTick{
@@ -104,7 +105,7 @@ func (simulator *Simulator) streamSymbol(
 				Symbol:  symbol,
 				Bid:     price - spread/2,
 				Ask:     price + spread/2,
-				ObservedAt:    timestamp.UTC(),
+				ObservedAt:    timestamp.In(location),
 			}
 			//logger.Info("hello this is azlan", "tick output",tick)
 			select {

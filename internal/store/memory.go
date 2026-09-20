@@ -128,7 +128,7 @@ func (store *MemoryStore) UpdatePriceTick(ctx context.Context, priceTick domain.
 
 func (store *MemoryStore) GetPriceTick(ctx context.Context, symbol string) (domain.PriceTick, error) {
 	if err := ctx.Err(); err != nil {
-		return domain.PriceTick, err
+		return domain.PriceTick{}, err
 	}
 	store.mu.RLock()
 	defer store.mu.RUnlock()
