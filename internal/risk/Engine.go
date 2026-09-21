@@ -4,7 +4,7 @@ import (
 	"log/slog"
 	"github.com/azlanamalik/Market-Risk-Analysis-backend-and-frontend-API-/internal/domain"
 )
-func risk(priceTick domain.PriceTick, position domain.Position) (domain.PositionRisk) {
+func Risk(priceTick domain.PriceTick, position domain.Position) (domain.PositionRisk) {
 	logger := slog.Default()
 	valid := priceTick.Validator() 
 	if !valid|| priceTick.Symbol != position.Symbol {

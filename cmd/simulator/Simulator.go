@@ -5,7 +5,6 @@ import (
 )
 
 
-
 func Run() {
 	fmt.Println("initialising the simulator")
 }

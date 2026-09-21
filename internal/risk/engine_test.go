@@ -41,9 +41,9 @@ func TestRiskBoundaries(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			got := risk(test.tick, test.position)
+			got := Risk(test.tick, test.position)
 			if got != test.want {
-				t.Fatalf("risk() = %+v, want %+v", got, test.want)
+				t.Fatalf("Risk() = %+v, want %+v", got, test.want)
 			}
 		})
 	}
