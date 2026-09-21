@@ -10,5 +10,4 @@ func main() {
 	defer cancel()
 	listOfDat := [] string {"AAPL","MSFT","GOOGL","AMZN","TSLA"}
 	simulator.Run(ctx,listOfDat)
-
 }
