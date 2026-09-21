@@ -37,6 +37,24 @@ func main() {
 
 	pipeline.Processor(ctx, tick, &memoryStore)
 
+	fmt.Println("processor completed")
+
+	positions, _ := memoryStore.GetPositionsBySymbol(ctx, "AAPL")
+	fmt.Println("stored positions:")
+	for index, position := range positions {
+		fmt.Printf("%d: %+v\n", index, position)
+	}
+
 	storedTick, _ := memoryStore.GetPriceTick(ctx, "AAPL")
-	fmt.Printf("processor ran: %+v\n", storedTick)
+	fmt.Printf("stored price tick: %+v\n", storedTick)
+
+	fmt.Println("stored risks:")
+	for _, portfolioID := range []string{"growth-portfolio", "income-portfolio"} {
+		storedRisk, err := memoryStore.GetRisk(ctx, portfolioID, "AAPL")
+		if err != nil {
+			fmt.Printf("%s: %v\n", portfolioID, err)
+			continue
+		}
+		fmt.Printf("%s: %+v\n", portfolioID, storedRisk)
+	}
 }

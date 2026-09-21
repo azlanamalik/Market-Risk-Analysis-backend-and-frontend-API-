@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"log/slog"
 	"strconv"
-
 	"github.com/azlanamalik/Market-Risk-Analysis-backend-and-frontend-API-/internal/domain"
+	"github.com/azlanamalik/Market-Risk-Analysis-backend-and-frontend-API-/internal/risk"
 	"github.com/azlanamalik/Market-Risk-Analysis-backend-and-frontend-API-/internal/store"
 )
 
@@ -42,6 +42,10 @@ func Processor(ctx context.Context, tick domain.PriceTick, store *store.MemorySt
 	for index, position := range dataPosBySymb {
 		print("here\n")//best debugging tool :)
 		fmt.Println("position", strconv.Itoa(index), ":", position)
-	}
+		risk_dat := risk.Risk(tick,position)
+		if err := store.InsertRisk(ctx,risk_dat); err != nil{
+			fmt.Println("issue with storing the risk:", err)
+		}
+	}//so now we have a list of data points that need updating with the new data
 	
 }
